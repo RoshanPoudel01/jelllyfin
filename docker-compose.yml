@@ -24,7 +24,7 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Etc/UTC
+      - TZ=Asia/Kathmandu
     volumes:
       - /docker/jellyfin:/config
       - /data/media/movies:/data/media/movies
@@ -48,7 +48,7 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Etc/UTC
+      - TZ=Asia/Kathmandu
       - WEBUI_PORT=8080
     volumes:
       - /docker/qbittorrent:/config
@@ -67,7 +67,7 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Etc/UTC
+      - TZ=Asia/Kathmandu
     volumes:
       - /docker/prowlarr:/config
     ports:
@@ -75,14 +75,26 @@ services:
     restart: unless-stopped
     networks:
       - arrnet
-
+      
+ flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=info
+      - TZ=Asia/Kathmandu
+    ports:
+      - 8191:8191
+    restart: unless-stopped
+    networks:
+      - arrnet
+      
   radarr:
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Etc/UTC
+      - TZ=Asia/Kathmandu
     volumes:
       - /docker/radarr:/config
       - /data/media/movies:/data/media/movies
@@ -99,7 +111,7 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Etc/UTC
+      - TZ=Asia/Kathmandu
     volumes:
       - /docker/sonarr:/config
       - /data/media/tv:/data/media/tv
@@ -116,7 +128,7 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Etc/UTC
+      - TZ=Asia/Kathmandu
     volumes:
       - /docker/lidarr:/config
       - /data/media/music:/data/media/music
@@ -127,13 +139,13 @@ services:
     networks:
       - arrnet
 
-  jellyseerr:
-    image: fallenbagel/jellyseerr:latest
-    container_name: jellyseerr
+  seerr:
+    image: seerr/seerr:latest
+    container_name: seerr
     environment:
-      - TZ=Etc/UTC
+      - TZ=Asia/Kathmandu
     volumes:
-      - /docker/jellyseerr:/app/config
+      - /docker/seerr:/app/config
     ports:
       - 5055:5055
     restart: unless-stopped
