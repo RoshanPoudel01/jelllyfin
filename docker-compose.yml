@@ -1,0 +1,153 @@
+version: "3.8"
+
+# ------------------------------------------------------------------
+# BEFORE YOU START:
+# 1. Create the folder structure on your host machine:
+#      mkdir -p /data/torrents /data/media/movies /data/media/tv /data/media/music
+#      mkdir -p /docker/qbittorrent /docker/prowlarr /docker/radarr /docker/sonarr /docker/lidarr /docker/jellyseerr /docker/jellyfin
+#
+# 2. Find your PUID/PGID by running: id $USER
+#    Replace 1000:1000 below with your actual values if different.
+#
+# 3. Set your timezone (TZ) below (e.g. Asia/Kathmandu).
+#
+# 4. Remove/stop the native Jellyfin service first (see instructions
+#    Claude gave you separately) before starting this stack, so the
+#    ports (8096/8920) are free.
+# ------------------------------------------------------------------
+
+services:
+
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - /docker/jellyfin:/config
+      - /data/media/movies:/data/media/movies
+      - /data/media/tv:/data/media/tv
+      - /data/media/music:/data/media/music
+    ports:
+      - 8096:8096       # HTTP web UI
+      - 8920:8920       # HTTPS (optional, only if you configure a cert)
+      - 7359:7359/udp   # Network discovery (optional)
+      - 1900:1900/udp   # DLNA (optional)
+    restart: unless-stopped
+    networks:
+      - arrnet
+    # Uncomment below for Intel/AMD GPU hardware transcoding (Ubuntu usually has /dev/dri):
+    # devices:
+    #   - /dev/dri:/dev/dri
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - WEBUI_PORT=8080
+    volumes:
+      - /docker/qbittorrent:/config
+      - /data/torrents:/data/torrents
+    ports:
+      - 8080:8080      # Web UI
+      - 6881:6881       # Torrent port (TCP)
+      - 6881:6881/udp   # Torrent port (UDP)
+    restart: unless-stopped
+    networks:
+      - arrnet
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - /docker/prowlarr:/config
+    ports:
+      - 9696:9696
+    restart: unless-stopped
+    networks:
+      - arrnet
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - /docker/radarr:/config
+      - /data/media/movies:/data/media/movies
+      - /data/torrents:/data/torrents
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+    networks:
+      - arrnet
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - /docker/sonarr:/config
+      - /data/media/tv:/data/media/tv
+      - /data/torrents:/data/torrents
+    ports:
+      - 8989:8989
+    restart: unless-stopped
+    networks:
+      - arrnet
+
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - /docker/lidarr:/config
+      - /data/media/music:/data/media/music
+      - /data/torrents:/data/torrents
+    ports:
+      - 8686:8686
+    restart: unless-stopped
+    networks:
+      - arrnet
+
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    environment:
+      - TZ=Etc/UTC
+    volumes:
+      - /docker/jellyseerr:/app/config
+    ports:
+      - 5055:5055
+    restart: unless-stopped
+    networks:
+      - arrnet
+
+networks:
+  arrnet:
+    name: arrnet
+    driver: bridge
+
+# ------------------------------------------------------------------
+# NOTE ON JELLYFIN:
+# Since Jellyfin is now on "arrnet" alongside everything else, Jellyseerr
+# can reach it at http://jellyfin:8096 (use this container name+port,
+# not an IP, when configuring Jellyseerr).
+# ------------------------------------------------------------------
